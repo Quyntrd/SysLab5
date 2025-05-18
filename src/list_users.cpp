@@ -1,0 +1,161 @@
+#include "check.hpp"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <utility>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <cstdio>
+#include <cstdlib>
+
+struct UserInfo {
+    uid_t uid;
+    std::string name;
+    std::string home_dir;
+    std::string shell;
+    std::string shadow_hash;
+    std::vector<std::pair<std::string, bool>> groups; // <group_name, is_admin>
+};
+
+// Read entire file by lines using FILE*
+static void parse_colon_file(const std::string &path,
+                             const std::function<void(const std::vector<std::string>&)> &handler) {
+    int fd = check(open(path.c_str(), O_RDONLY));
+    FILE *f = check(fdopen(fd, "r"));
+    char *line = nullptr;
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, f)) != -1) {
+        // strip newline
+        if (read > 0 && (line[read-1]=='\n' || line[read-1]=='\r')) line[--read] = '\0';
+        std::vector<std::string> parts;
+        char *tok = strtok(line, ":");
+        while (tok) {
+            parts.emplace_back(tok);
+            tok = strtok(nullptr, ":");
+        }
+        handler(parts);
+    }
+    free(line);
+    fclose(f);
+}
+
+int main() {
+    // Temporary storage
+    std::map<std::string, UserInfo> users;
+    std::map<std::string, std::vector<std::string>> grp_members;
+    std::map<std::string, std::vector<std::string>> grp_admins;
+    std::map<gid_t, std::string> gid_to_group;
+
+    // 1. Parse /etc/shadow to get hashes
+    parse_colon_file("/etc/shadow", [&](const std::vector<std::string> &p){
+        if (p.size() < 2) return;
+        const std::string &user = p[0];
+        const std::string &hash = p[1];
+        users[user].name = user;
+        users[user].shadow_hash = hash;
+    });
+
+    // 2. Parse /etc/gshadow to get admins
+    parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
+        if (p.size() < 2) return;
+        const std::string &grp = p[0];
+        // p[1] = admin list comma-separated
+        std::string admins = p[1];
+        size_t start = 0;
+        do {
+            size_t pos = admins.find(',', start);
+            std::string name = admins.substr(start, pos - start);
+            if (!name.empty()) grp_admins[grp].push_back(name);
+            if (pos == std::string::npos) break;
+            start = pos + 1;
+        } while (true);
+    });
+
+    // Drop privileges after reading shadow and gshadow
+    check(setuid(getuid()));
+
+    // 3. Parse /etc/passwd: uid, home, shell, primary gid
+    std::map<std::string, gid_t> primary_gid;
+    parse_colon_file("/etc/passwd", [&](const std::vector<std::string> &p){
+        if (p.size() < 7) return;
+        const std::string &user = p[0];
+        uid_t uid = static_cast<uid_t>(std::stoul(p[2]));
+        gid_t gid = static_cast<gid_t>(std::stoul(p[3]));
+        const std::string &home = p[5];
+        const std::string &shell = p[6];
+        UserInfo &ui = users[user];
+        ui.name = user;
+        ui.uid = uid;
+        ui.home_dir = home;
+        ui.shell = shell;
+        primary_gid[user] = gid;
+    });
+
+    // 4. Parse /etc/group: members and map gid->group
+    parse_colon_file("/etc/group", [&](const std::vector<std::string> &p){
+        if (p.size() < 4) return;
+        const std::string &grp = p[0];
+        gid_t gid = static_cast<gid_t>(std::stoul(p[2]));
+        gid_to_group[gid] = grp;
+        // p[3] = members comma-separated
+        std::string mems = p[3];
+        size_t start = 0;
+        do {
+            size_t pos = mems.find(',', start);
+            std::string name = mems.substr(start, pos - start);
+            if (!name.empty()) grp_members[grp].push_back(name);
+            if (pos == std::string::npos) break;
+            start = pos + 1;
+        } while (true);
+    });
+
+    // 5. Assemble groups per user
+    for (auto &up : users) {
+        const std::string &user = up.first;
+        UserInfo &ui = up.second;
+        // Primary group
+        gid_t pgid = primary_gid[user];
+        if (gid_to_group.count(pgid)) {
+            const std::string &gname = gid_to_group[pgid];
+            bool is_admin = false;
+            ui.groups.emplace_back(gname, is_admin);
+        }
+        // Supplementary groups
+        for (auto &gm : grp_members) {
+            const std::string &gname = gm.first;
+            for (const auto &member : gm.second) {
+                if (member == user) {
+                    bool is_admin = false;
+                    // check admin list
+                    if (grp_admins.count(gname)) {
+                        for (const auto &adm : grp_admins[gname]) {
+                            if (adm == user) { is_admin = true; break; }
+                        }
+                    }
+                    ui.groups.emplace_back(gname, is_admin);
+                    break;
+                }
+            }
+        }
+    }
+
+    // 6. Output
+    for (const auto &up : users) {
+        const UserInfo &ui = up.second;
+        std::cout << "UID: " << ui.uid << ", User: " << ui.name << std::endl;
+        std::cout << "  Home: " << ui.home_dir << ", Shell: " << ui.shell << std::endl;
+        std::cout << "  Shadow hash: " << ui.shadow_hash << std::endl;
+        std::cout << "  Groups:" << std::endl;
+        for (const auto &g : ui.groups) {
+            std::cout << "    - " << g.first;
+            if (g.second) std::cout << " [admin]";
+            std::cout << std::endl;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
