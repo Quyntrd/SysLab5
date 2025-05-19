@@ -1,147 +1,207 @@
-
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:41: error: ‘function’ in namespace ‘std’ does not name a template type
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                                         ^~~~~~~~
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:13:1: note: ‘std::function’ is defined in header ‘<functional>’; did you forget to ‘#include <functional>’?
-[build]    12 | #include <cstdlib>
-[build]   +++ |+#include <functional>
-[build]    13 | 
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:49: error: expected ‘,’ or ‘...’ before ‘<’ token
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                                                 ^
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp: In function ‘void parse_colon_file(const std::string&, int)’:
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:35:21: error: ‘strtok’ was not declared in this scope; did you mean ‘strtoq’?
-[build]    35 |         char *tok = strtok(line, ":");
-[build]       |                     ^~~~~~
-[build]       |                     strtoq
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:40:9: error: ‘handler’ was not declared in this scope
-[build]    40 |         handler(parts);
-[build]       |         ^~~~~~~
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp: In function ‘int main()’:
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:54:37: error: cannot convert ‘main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>’ to ‘int’
-[build]    54 |     parse_colon_file("/etc/shadow", [&](const std::vector<std::string> &p){
-[build]       |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]       |                                     |
-[build]       |                                     main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>
-[build]    55 |         if (p.size() < 2) return;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~    
-[build]    56 |         const std::string &user = p[0];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    57 |         const std::string &hash = p[1];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    58 |         users[user].name = user;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~     
-[build]    59 |         users[user].shadow_hash = hash;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    60 |     });
-[build]       |     ~                                
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:30: note:   initializing argument 2 of ‘void parse_colon_file(const std::string&, int)’
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                              ^~~~~~~~~~~~~~~~~~~
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:63:38: error: cannot convert ‘main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>’ to ‘int’
-[build]    63 |     parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
-[build]       |                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]       |                                      |
-[build]       |                                      main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>
-[build]    64 |         if (p.size() < 2) return;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~     
-[build]    65 |         const std::string &grp = p[0];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    66 |         // p[1] = admin list comma-separated
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    67 |         std::string admins = p[1];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~    
-[build]    68 |         size_t start = 0;
-[build]       |         ~~~~~~~~~~~~~~~~~             
-[build]    69 |         do {
-[build]       |         ~~~~                          
-[build]    70 |             size_t pos = admins.find(',', start);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    71 |             std::string name = admins.substr(start, pos - start);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    72 |             if (!name.empty()) grp_admins[grp].push_back(name);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    73 |             if (pos == std::string::npos) break;
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    74 |             start = pos + 1;
-[build]       |             ~~~~~~~~~~~~~~~~          
-[build]    75 |         } while (true);
-[build]       |         ~~~~~~~~~~~~~~~               
-[build]    76 |     });
-[build]       |     ~                                 
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:30: note:   initializing argument 2 of ‘void parse_colon_file(const std::string&, int)’
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                              ^~~~~~~~~~~~~~~~~~~
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:83:37: error: cannot convert ‘main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>’ to ‘int’
-[build]    83 |     parse_colon_file("/etc/passwd", [&](const std::vector<std::string> &p){
-[build]       |                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]       |                                     |
-[build]       |                                     main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>
-[build]    84 |         if (p.size() < 7) return;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~    
-[build]    85 |         const std::string &user = p[0];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    86 |         uid_t uid = static_cast<uid_t>(std::stoul(p[2]));
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    87 |         gid_t gid = static_cast<gid_t>(std::stoul(p[3]));
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    88 |         const std::string &home = p[5];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    89 |         const std::string &shell = p[6];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]    90 |         UserInfo &ui = users[user];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-[build]    91 |         ui.name = user;
-[build]       |         ~~~~~~~~~~~~~~~              
-[build]    92 |         ui.uid = uid;
-[build]       |         ~~~~~~~~~~~~~                
-[build]    93 |         ui.home_dir = home;
-[build]       |         ~~~~~~~~~~~~~~~~~~~          
-[build]    94 |         ui.shell = shell;
-[build]       |         ~~~~~~~~~~~~~~~~~            
-[build]    95 |         primary_gid[user] = gid;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~     
-[build]    96 |     });
-[build]       |     ~                                
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:30: note:   initializing argument 2 of ‘void parse_colon_file(const std::string&, int)’
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                              ^~~~~~~~~~~~~~~~~~~
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:99:36: error: cannot convert ‘main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>’ to ‘int’
-[build]    99 |     parse_colon_file("/etc/group", [&](const std::vector<std::string> &p){
-[build]       |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]       |                                    |
-[build]       |                                    main()::<lambda(const std::vector<std::__cxx11::basic_string<char> >&)>
-[build]   100 |         if (p.size() < 4) return;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~   
-[build]   101 |         const std::string &grp = p[0];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   102 |         gid_t gid = static_cast<gid_t>(std::stoul(p[2]));
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   103 |         gid_to_group[gid] = grp;
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~    
-[build]   104 |         // p[3] = members comma-separated
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   105 |         std::string mems = p[3];
-[build]       |         ~~~~~~~~~~~~~~~~~~~~~~~~    
-[build]   106 |         size_t start = 0;
-[build]       |         ~~~~~~~~~~~~~~~~~           
-[build]   107 |         do {
-[build]       |         ~~~~                        
-[build]   108 |             size_t pos = mems.find(',', start);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   109 |             std::string name = mems.substr(start, pos - start);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   110 |             if (!name.empty()) grp_members[grp].push_back(name);
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   111 |             if (pos == std::string::npos) break;
-[build]       |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[build]   112 |             start = pos + 1;
-[build]       |             ~~~~~~~~~~~~~~~~        
-[build]   113 |         } while (true);
-[build]       |         ~~~~~~~~~~~~~~~             
-[build]   114 |     });
-[build]       |     ~                               
-[build] /home/vboxuser/Desktop/lab5/SysLab5/src/list_users.cpp:25:30: note:   initializing argument 2 of ‘void parse_colon_file(const std::string&, int)’
-[build]    25 |                              const std::function<void(const std::vector<std::string>&)> &handler) {
-[build]       |                              ^~~~~~~~~~~~~~~~~~~
-[build] gmake[2]: *** [CMakeFiles/list_users.dir/build.make:76: CMakeFiles/list_users.dir/src/list_users.cpp.o] Error 1
+UID: 0, User: _apt
+  Home: , Shell: 
+  Shadow hash: *
+  Groups:
+UID: 108, User: avahi
+  Home: /run/avahi-daemon, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 34, User: backup
+  Home: /var/backups, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 2, User: bin
+  Home: /bin, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 118, User: colord
+  Home: /var/lib/colord, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 0, User: cups-browsed
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 112, User: cups-pk-helper
+  Home: /nonexistent, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+    - lpadmin
+UID: 1, User: daemon
+  Home: /usr/sbin, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 100, User: dhcpcd
+  Home: /usr/lib/dhcpcd, Shell: /bin/false
+  Shadow hash: !
+  Groups:
+UID: 999, User: dnsmasq
+  Home: /var/lib/misc, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 989, User: fwupd-refresh
+  Home: /var/lib/fwupd, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 5, User: games
+  Home: /usr/games, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 120, User: gdm
+  Home: /var/lib/gdm3, Shell: /bin/false
+  Shadow hash: !
+  Groups:
+UID: 0, User: geoclue
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 0, User: gnome-initial-setup
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 988, User: gnome-remote-desktop
+  Home: /var/lib/gnome-remote-desktop, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 116, User: hplip
+  Home: /run/hplip, Shell: /bin/false
+  Shadow hash: !
+  Groups:
+UID: 39, User: irc
+  Home: /run/ircd, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 106, User: kernoops
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 38, User: list
+  Home: /var/list, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 7, User: lp
+  Home: /var/spool/lpd, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 8, User: mail
+  Home: /var/mail, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 6, User: man
+  Home: /var/cache/man, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 0, User: messagebus
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 9, User: news
+  Home: /var/spool/news, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 121, User: nm-openvpn
+  Home: /var/lib/openvpn/chroot, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 65534, User: nobody
+  Home: /nonexistent, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 987, User: polkitd
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 13, User: proxy
+  Home: /bin, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 0, User: root
+  Home: /root, Shell: /bin/bash
+  Shadow hash: *
+  Groups:
+UID: 117, User: rtkit
+  Home: /proc, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 0, User: saned
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+    - scanner
+UID: 111, User: speech-dispatcher
+  Home: /run/speech-dispatcher, Shell: /bin/false
+  Shadow hash: !
+  Groups:
+UID: 110, User: sssd
+  Home: /var/lib/sss, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+UID: 4, User: sync
+  Home: /bin, Shell: /bin/sync
+  Shadow hash: *
+  Groups:
+UID: 3, User: sys
+  Home: /dev, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 0, User: syslog
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+    - adm
+UID: 998, User: systemd-network
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 990, User: systemd-oom
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 991, User: systemd-resolve
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 996, User: systemd-timesync
+  Home: /, Shell: /usr/sbin/nologin
+  Shadow hash: !*
+  Groups:
+UID: 0, User: tcpdump
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 105, User: tss
+  Home: /var/lib/tpm, Shell: /bin/false
+  Shadow hash: !
+  Groups:
+UID: 104, User: usbmux
+  Home: /var/lib/usbmux, Shell: /usr/sbin/nologin
+  Shadow hash: !
+  Groups:
+    - plugdev
+UID: 10, User: uucp
+  Home: /var/spool/uucp, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
+UID: 0, User: uuidd
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 1000, User: vboxuser
+  Home: /home/vboxuser, Shell: /bin/bash
+  Shadow hash: $6$eXaMbS7t4qXsmn/o$bA0uoPVJfq2/fxu8q9Hqnh.vk0B..yc0vBo/I7ZRSvYrztNRQt2SWwZloX7qikCW0FqqHMpbN4APPZSvMd.SZ/
+  Groups:
+    - adm
+    - cdrom
+    - dip
+    - lpadmin
+    - plugdev
+    - sudo
+    - users
+UID: 0, User: whoopsie
+  Home: , Shell: 
+  Shadow hash: !
+  Groups:
+UID: 33, User: www-data
+  Home: /var/www, Shell: /usr/sbin/nologin
+  Shadow hash: *
+  Groups:
