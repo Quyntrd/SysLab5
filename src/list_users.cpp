@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <functional>
+#include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -27,15 +29,16 @@ static void parse_colon_file(const std::string &path,
     FILE *f = check(fdopen(fd, "r"));
     char *line = nullptr;
     size_t len = 0;
-    ssize_t read;
-    while ((read = getline(&line, &len, f)) != -1) {
+    ssize_t read_bytes;
+    while ((read_bytes = getline(&line, &len, f)) != -1) {
         // strip newline
-        if (read > 0 && (line[read-1]=='\n' || line[read-1]=='\r')) line[--read] = '\0';
+        if (read_bytes > 0 && (line[read_bytes-1]=='\n' || line[read_bytes-1]=='\r'))
+            line[--read_bytes] = '\0';
         std::vector<std::string> parts;
-        char *tok = strtok(line, ":");
+        char *tok = std::strtok(line, ":");
         while (tok) {
             parts.emplace_back(tok);
-            tok = strtok(nullptr, ":");
+            tok = std::strtok(nullptr, ":");
         }
         handler(parts);
     }
@@ -63,16 +66,15 @@ int main() {
     parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
         if (p.size() < 2) return;
         const std::string &grp = p[0];
-        // p[1] = admin list comma-separated
         std::string admins = p[1];
         size_t start = 0;
-        do {
+        while (start <= admins.size()) {
             size_t pos = admins.find(',', start);
             std::string name = admins.substr(start, pos - start);
             if (!name.empty()) grp_admins[grp].push_back(name);
             if (pos == std::string::npos) break;
             start = pos + 1;
-        } while (true);
+        }
     });
 
     // Drop privileges after reading shadow and gshadow
@@ -101,16 +103,15 @@ int main() {
         const std::string &grp = p[0];
         gid_t gid = static_cast<gid_t>(std::stoul(p[2]));
         gid_to_group[gid] = grp;
-        // p[3] = members comma-separated
         std::string mems = p[3];
         size_t start = 0;
-        do {
+        while (start <= mems.size()) {
             size_t pos = mems.find(',', start);
             std::string name = mems.substr(start, pos - start);
             if (!name.empty()) grp_members[grp].push_back(name);
             if (pos == std::string::npos) break;
             start = pos + 1;
-        } while (true);
+        }
     });
 
     // 5. Assemble groups per user
@@ -119,20 +120,19 @@ int main() {
         UserInfo &ui = up.second;
         // Primary group
         gid_t pgid = primary_gid[user];
-        if (gid_to_group.count(pgid)) {
-            const std::string &gname = gid_to_group[pgid];
-            bool is_admin = false;
-            ui.groups.emplace_back(gname, is_admin);
+        auto it = gid_to_group.find(pgid);
+        if (it != gid_to_group.end()) {
+            ui.groups.emplace_back(it->second, false);
         }
         // Supplementary groups
-        for (auto &gm : grp_members) {
+        for (const auto &gm : grp_members) {
             const std::string &gname = gm.first;
             for (const auto &member : gm.second) {
                 if (member == user) {
                     bool is_admin = false;
-                    // check admin list
-                    if (grp_admins.count(gname)) {
-                        for (const auto &adm : grp_admins[gname]) {
+                    auto ait = grp_admins.find(gname);
+                    if (ait != grp_admins.end()) {
+                        for (const auto &adm : ait->second) {
                             if (adm == user) { is_admin = true; break; }
                         }
                     }
