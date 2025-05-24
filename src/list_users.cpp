@@ -47,13 +47,12 @@ static void parse_colon_file(const std::string &path,
 }
 
 int main() {
-    // Temporary storage
     std::map<std::string, UserInfo> users;
     std::map<std::string, std::vector<std::string>> grp_members;
     std::map<std::string, std::vector<std::string>> grp_admins;
     std::map<gid_t, std::string> gid_to_group;
 
-    // 1. Parse /etc/shadow to get hashes
+    // parse /etc/shadow to get hashes
     parse_colon_file("/etc/shadow", [&](const std::vector<std::string> &p){
         if (p.size() < 2) return;
         const std::string &user = p[0];
@@ -62,7 +61,7 @@ int main() {
         users[user].shadow_hash = hash;
     });
 
-    // 2. Parse /etc/gshadow to get admins
+    // parse /etc/gshadow to get admins
     parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
         if (p.size() < 2) return;
         const std::string &grp = p[0];
@@ -77,10 +76,10 @@ int main() {
         }
     });
 
-    // Drop privileges after reading shadow and gshadow
+    // Drop privileges
     check(setuid(getuid()));
 
-    // 3. Parse /etc/passwd: uid, home, shell, primary gid
+    // parse /etc/passwd: uid, home, shell, primary gid
     std::map<std::string, gid_t> primary_gid;
     parse_colon_file("/etc/passwd", [&](const std::vector<std::string> &p){
         if (p.size() < 7) return;
@@ -97,7 +96,7 @@ int main() {
         primary_gid[user] = gid;
     });
 
-    // 4. Parse /etc/group: members and map gid->group
+    // parse /etc/group: members and map gid group
     parse_colon_file("/etc/group", [&](const std::vector<std::string> &p){
         if (p.size() < 4) return;
         const std::string &grp = p[0];
@@ -114,7 +113,7 @@ int main() {
         }
     });
 
-    // 5. Assemble groups per user
+    // assemble groups per user
     for (auto &up : users) {
         const std::string &user = up.first;
         UserInfo &ui = up.second;
@@ -143,11 +142,11 @@ int main() {
         }
     }
 
-    // 6. Output
+    // output
     for (const auto &up : users) {
         const UserInfo &ui = up.second;
-        std::cout << "UID: " << ui.uid << ", User: " << ui.name << std::endl;
-        std::cout << "  Home: " << ui.home_dir << ", Shell: " << ui.shell << std::endl;
+        std::cout << "UID: " << ui.uid << ",\nUser: " << ui.name << std::endl;
+        std::cout << "  Home: " << ui.home_dir << ",\n  Shell: " << ui.shell << std::endl;
         std::cout << "  Shadow hash: " << ui.shadow_hash << std::endl;
         std::cout << "  Groups:" << std::endl;
         for (const auto &g : ui.groups) {
@@ -155,6 +154,7 @@ int main() {
             if (g.second) std::cout << " [admin]";
             std::cout << std::endl;
         }
+        std::cout << "-----------------------" << std::endl;
     }
 
     return EXIT_SUCCESS;
