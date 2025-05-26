@@ -65,7 +65,7 @@ int main() {
     parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
         if (p.size() < 4) return;
         const std::string &grp = p[0];
-        std::string &admins_field = p[2];
+        const std::string &admins_field = p[2];
         if(admins_field.empty()) return;
         size_t start = 0;
         while (start <= admins_field.size()) {

@@ -1,2 +1,0 @@
-qualifiers dropped in binding reference of type "std::string &" to initializer of type "const __gnu_cxx::__alloc_traits<std::allocator<std::string>, std::allocator<std::string>::value_type>::value_type" (aka "const std::string")C/C++(433)
-inding reference of type ‘std::string&’ {aka ‘std::__cxx11::basic_string<char>&’} to ‘const __gnu_cxx::__alloc_traits<std::allocator<std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >::value_type’ {aka ‘const std::__cxx11::basic_string<char>’} discards qualifiersGCC
