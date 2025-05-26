@@ -63,13 +63,14 @@ int main() {
 
     // parse /etc/gshadow to get admins
     parse_colon_file("/etc/gshadow", [&](const std::vector<std::string> &p){
-        if (p.size() < 2) return;
+        if (p.size() < 4) return;
         const std::string &grp = p[0];
-        std::string admins = p[1];
+        std::string &admins_field = p[2];
+        if(admins_field.empty()) return;
         size_t start = 0;
-        while (start <= admins.size()) {
-            size_t pos = admins.find(',', start);
-            std::string name = admins.substr(start, pos - start);
+        while (start <= admins_field.size()) {
+            size_t pos = admins_field.find(',', start);
+            std::string name = admins_field.substr(start, pos - start);
             if (!name.empty()) grp_admins[grp].push_back(name);
             if (pos == std::string::npos) break;
             start = pos + 1;
@@ -151,7 +152,7 @@ int main() {
         std::cout << "  Groups:" << std::endl;
         for (const auto &g : ui.groups) {
             std::cout << "    - " << g.first;
-            if (g.second) std::cout << " [admin]";
+            if (g.second) std::cout << " [AAAAAAAAAAAAADDDDMMMMIIINNN]";
             std::cout << std::endl;
         }
         std::cout << "-----------------------" << std::endl;

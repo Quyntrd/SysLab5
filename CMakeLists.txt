@@ -13,7 +13,3 @@ if(MSVC)
 else()
     target_compile_options(list_users PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
-# После сборки в README или вручную требуется установить SUID:
-# sudo chown root:root list_users
-# sudo chmod u+s list_users
