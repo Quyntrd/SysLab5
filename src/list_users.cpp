@@ -13,30 +13,24 @@
 #include <cstdio>
 #include <cstdlib>
 
-// Read entire file by lines using FILE*
-static std::vector<std::string> slurp_lines(const std::string &path) {
-    int fd = check(open(path.c_str(), O_RDONLY));
-    std::string all;
-    char buf[4096];
+static void parse_stream(FILE *f,
+                         const std::function<void(const std::vector<std::string>&)> &handler) {
+    char *line = nullptr;
+    size_t len = 0;
     ssize_t n;
-    while ((n = check(read(fd, buf, sizeof(buf)))) > 0) {
-        all.append(buf, n);
-    }
-    close(fd);
-
-    std::vector<std::string> lines;
-    size_t pos = 0;
-    while (pos < all.size()) {
-        size_t e = all.find('\n', pos);
-        if (e == std::string::npos) {
-            lines.emplace_back(all.substr(pos));
-            break;
-        } else {
-            lines.emplace_back(all.substr(pos, e - pos));
-            pos = e + 1;
+    while ((n = getline(&line, &len, f)) != -1) {
+        // Обрезаем \n или \r
+        if (n > 0 && (line[n-1]=='\n'||line[n-1]=='\r'))
+            line[--n] = '\0';
+        std::vector<std::string> parts;
+        char *tok = std::strtok(line, ":");
+        while (tok) {
+            parts.emplace_back(tok);
+            tok = std::strtok(nullptr, ":");
         }
+        handler(parts);
     }
-    return lines;
+    free(line);
 }
 
 // Read entire file by lines using FILE*
@@ -90,10 +84,13 @@ struct UserInfo {
 
 int main() {
     // parse /etc/shadow to get hashes
-    auto shadow_lines  = slurp_lines("/etc/shadow");
+    int shadow_fd  = check(open("/etc/shadow",  O_RDONLY));
+    int gshadow_fd = check(open("/etc/gshadow", O_RDONLY));
 
-    // parse /etc/gshadow to get admins
-    auto gshadow_lines = slurp_lines("/etc/gshadow");
+    // Конвертируем в FILE* для удобства чтения
+    FILE *shadow_f  = check(fdopen(shadow_fd,  "r"));
+    FILE *gshadow_f = check(fdopen(gshadow_fd, "r"));
+
 
     // Drop privileges
     check(setuid(getuid()));
@@ -104,27 +101,29 @@ int main() {
     std::map<gid_t, std::string> gid_to_group;
     std::map<std::string, gid_t> primary_gid;
 
-    parse_buffer(shadow_lines, [&](const std::vector<std::string> &p){
+    parse_stream(shadow_f, [&](const std::vector<std::string> &p){
         if (p.size() < 2) return;
         const std::string &user = p[0];
         users[user].name = user;
         users[user].shadow_hash = p[1];
     });
+    fclose(shadow_f);
 
-    parse_buffer(gshadow_lines, [&](const std::vector<std::string> &p){
-        if (p.size() < 4) return;
+    parse_stream(gshadow_f, [&](const std::vector<std::string> &p){
+        if (p.size() < 4) return;          // <grp>:<pass>:<admins>:<members>
         const std::string &grp = p[0];
-        const std::string &admins_field = p[2];
-        if (admins_field.empty()) return;
+        const std::string &admins = p[2];
+        if (admins.empty()) return;
         size_t start = 0;
-        while (start < admins_field.size()) {
-            size_t pos = admins_field.find(',', start);
-            std::string name = admins_field.substr(start, pos - start);
+        while (start < admins.size()) {
+            size_t pos = admins.find(',', start);
+            std::string name = admins.substr(start, pos - start);
             if (!name.empty()) grp_admins[grp].push_back(name);
             if (pos == std::string::npos) break;
             start = pos + 1;
         }
     });
+    fclose(gshadow_f);
 
     // parse /etc/passwd: uid, home, shell, primary gid
     parse_colon_file("/etc/passwd", [&](const std::vector<std::string> &p){
